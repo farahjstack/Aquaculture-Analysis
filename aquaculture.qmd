@@ -1,0 +1,83 @@
+---
+title: "Aquaculture Analysis"
+subtitle: "EDS 223: Homework 3"
+author: "Farah Stack"
+date: 2026-11-02
+execute: 
+  eval: true
+format: pdf
+mainfont: Helvetica
+editor_options: 
+  chunk_output_type: console
+---
+
+# Load libraries
+```{r}
+#| warning: false
+#| message: false
+# Load packages
+library(tidyverse)
+library(terra)
+library(sf)
+library(here)
+library(stars)
+library(tmap)
+library(RColorBrewer)
+library(knitr)
+library(gt)
+library(spData)
+library(spDataLarge)
+```
+
+# Prepare data
+```{r}
+#| warning: false
+#| message: false
+# read in sea surface temperature rasters
+sst_2008 <- rast("data/average_annual_sst_2008.tif")
+sst_2009 <- rast("data/average_annual_sst_2009.tif")
+sst_2010 <- rast("data/average_annual_sst_2010.tif")
+sst_2011 <- rast("data/average_annual_sst_2011.tif")
+sst_2012 <- rast("data/average_annual_sst_2012.tif")
+
+# read in bathmetry raster
+ocean_depth <- rast("data/depth.tif")
+
+# read in West Coast exclsuive economic zones (EEZ)
+eez <- st_read("data/wc_regions_clean.shp")
+```
+
+```{r}
+# Stack rasters
+sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
+```
+
+```{r}
+# Find mean of raster stack
+sst_mean <- mean(sst_stack, na.rm = TRUE)
+```
+
+```{r}
+# Ensure stack includes all 5 rasters
+plot(sst_mean)
+```
+
+```{r}
+# Check CRS' are all the same
+st_crs(sst_mean)
+st_crs(ocean_depth)
+st_crs(eez)
+```
+
+```{r}
+# Check to make sure CRS' match! 
+if(st_crs(sst_mean) == st_crs(eez)){
+  print("crs matches!")
+}else{
+  warning("crs does not match")
+  print(paste("rasters have", st_crs(eez), "crs"))
+  }
+```
+
+
+
