@@ -1,16 +1,24 @@
-# TITLE
+# Title
+
+## About
 - explain repo's purpose
 - a concise description of what's housed in the repo
 
-## DATA
-- details regarding data access
+## Repository Contents
 
-# WORKFLOW
+## Data
 
-## AUTHOR
+## Sources
 
-## REFERENCES
+## Reproducing the Analysis
 
-## ACKNOLWEDGEMENTS
+## Methods
+
+## Author
+
+## References
+
+## Acknowledgements
+
 
 
