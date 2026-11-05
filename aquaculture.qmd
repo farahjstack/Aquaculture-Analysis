@@ -2,7 +2,7 @@
 title: "Aquaculture Analysis"
 subtitle: "EDS 223: Homework 3"
 author: "Farah Stack"
-date: 2026-11-02
+date: 2026-11-04
 execute: 
   eval: true
 format: pdf
@@ -47,37 +47,190 @@ ocean_depth <- rast("data/depth.tif")
 eez <- st_read("data/wc_regions_clean.shp")
 ```
 
+# Process data
 ```{r}
 # Stack rasters
 sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
 ```
 
 ```{r}
-# Find mean of raster stack
+# Check if coordinate reference system's match
+# If not, transform each one to match
+if(crs(ocean_depth) == crs(eez)) {
+  print("Coordinate reference systems match")
+} else{
+  warning("Updating coordinate reference systems to match")
+  crs(ocean_depth) <- crs(eez)
+}
+
+# check if coordinate reference systems match
+if(crs(sst_stack) == crs(eez)) {
+  print("Coordinate reference systems match")
+} else{
+  warning("Updating coordinate reference systems to match")
+  crs(sst_stack) <- crs(eez)
+}
+
+# check if coordinate reference systems match
+if(crs(sst_stack) == crs(ocean_depth)) {
+  print("Coordinate reference systems match")
+} else{
+  warning("Updating coordinate reference systems to match")
+  crs(sst_stack) <- crs(ocean_depth)
+}
+```
+
+```{r}
+# Find mean SST from 2008-2012
 sst_mean <- mean(sst_stack, na.rm = TRUE)
 ```
 
 ```{r}
 # Ensure stack includes all 5 rasters
-plot(sst_mean)
+plot(sst_stack)
 ```
 
 ```{r}
-# Check CRS' are all the same
-st_crs(sst_mean)
-st_crs(ocean_depth)
-st_crs(eez)
+# Convert SST from Kelvin to Celsius (hint: subtract by 273.15)
+sst_celsius <- sst_mean - 273.15
 ```
 
 ```{r}
-# Check to make sure CRS' match! 
-if(st_crs(sst_mean) == st_crs(eez)){
-  print("crs matches!")
-}else{
-  warning("crs does not match")
-  print(paste("rasters have", st_crs(eez), "crs"))
-  }
+# crop depth raster to match the extent of the SST raster
+crop_depth <- crop(ocean_depth, sst_celsius)
+```
+
+```{r}
+# plot ocean depth
+plot(ocean_depth)
+```
+
+```{r}
+# plot crop_depth
+plot(crop_depth)
+```
+
+```{r}
+# resample the depth data to match the resolution of the SST data using the bilinear method approach
+ocean_depth_resampled <- resample(crop_depth, sst_celsius, method = "bilinear")
+```
+
+```{r}
+# Check that the depth and SST match in resolution, extent, and CRS
+# If not, convert to match
+if(all(res(sst_celsius) == res(ocean_depth_resampled))) {
+  print("The resolutions match!")
+} else{
+  warning("Updating resolutions to match")
+  res(ocean_depth_resampled) <- res(sst_celsius)
+}
+
+if(ext(sst_celsius) == ext(ocean_depth_resampled)) {
+  print("The extents match!")
+} else{
+  warning("Updating extents to match")
+  ext(ocean_depth_resampled) <- ext(sst_celsius)
+}
+
+if(crs(ocean_depth_resampled) == crs(sst_celsius)) {
+  print("The coordinate reference systems match!")
+} else{
+  warning("Updating coordinate reference systems to match")
+  crs(ocean_depth_resampled) <- crs(sst_celsius)
+  if (crs(ocean_depth_resampled) == crs(sst_celsius)) {
+    print("The coordinate reference systems match!")}
+}
+```
+
+```{r}
+# stack rasters
+stack_test <- c(ocean_depth_resampled, sst_celsius)
+
+#plot
+plot(stack_test)
 ```
 
 
+```{r}
+suitable_aquaculutre <- function(sst_min, sst_max, depth_min, depth_max, species_name){
+  # SST reclassification matrix
+sst_reclassified <- matrix(
+  c(
+    -Inf, sst_min, 0,
+    sst_min, sst_max, 1,
+    sst_max, Inf, 0
+  ),
+  ncol = 3,
+  byrow = TRUE
+)
 
+# Reclassify SST
+sst_suitable <- classify(sst_celsius, rcl = sst_reclassified)
+
+# Depth reclassification matrix
+depth_reclassified <- matrix(
+  c(
+    -Inf, depth_min, 0,
+    depth_min, depth_max, 1,
+    depth_max, Inf, 0
+  ),
+  ncol = 3,
+  byrow = TRUE
+)
+
+# Reclassify depth
+depth_suitable <- classify(ocean_depth_resampled, rcl = depth_reclassified)
+
+# Find locations that satisfy BOTH SST and depth conditions
+
+# Add oyster zone rasters
+sst_depth_suitable <- c(sst_suitable, depth_suitable)
+
+# Find locations that satisfy both SST and depth conditions
+suitable <- lapp(sst_depth_suitable, function(sst, ocean_depth) sst * ocean_depth)
+
+# Rasterize EEZ data
+eez_raster <- rasterize(eez, suitable, field = 'rgn_id')
+
+# create new raster with pixels only in the EEZ zone
+suitable_regions <- mask(suitable, eez_raster)
+
+# keep only 1's!
+suitable_regions[suitable_regions == 0] <- NA
+
+# Calculate area of each cell
+cell_area <- cellSize(suitable_regions, unit = 'km')
+
+# Calculte total area of grid cells within suitable area
+suitable_area <- cell_area * suitable_regions
+
+# Find total suitable area within each EEZ
+suitable_area_by_eez <- zonal(
+  suitable_area,
+  eez_raster,
+  fun = 'sum',
+  na.rm = TRUE
+)
+
+# Convert zonal results to a data frame
+suitable_area_df <- as_tibble(suitable_area_by_eez)
+
+# Join suitable area to EEZ polygons
+eez_map <- left_join(eez, suitable_area_df, by = "rgn_id")
+
+# Create map
+tm_basemap("OpenStreetMap") +
+tm_shape(eez_map) +
+  tm_polygons(
+    fill = "area",
+    fill.legend = tm_legend(title = "Suitable Area (km^2)")
+    ) +
+  tm_title(paste("Suitable", species_name, "Habitats\nby West Coast EEZ", size = 1)) +
+  tm_scalebar() +
+  tm_compass()
+}
+```
+
+```{r}
+suitable_aquaculutre(11, 30, -70, 0, "oysters")
+```
