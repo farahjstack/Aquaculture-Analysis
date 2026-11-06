@@ -239,3 +239,8 @@ suitable_aquaculutre(11, 30, -70, 0, "oysters")
 suitable_aquaculutre(11, 28.5, -180, 0, "pacific calico scallop")
 ```
 
+
+The two maps illustrate the distribution of potentially suitable oyster and Pacific calico scallop aquaculture habitats across the West Coast Exclusive Economic Zone (EEZ), based on sea surface temperature (SST) and ocean depth. Using average SST data from 2008–2012 and bathymetry data, suitable habitats were identified based on each species' environmental requirements. Oysters were evaluated using temperatures of 11–30°C and depths of 0–70 meters, while Pacific calico scallops were evaluated using temperatures of 11–28.5°C and depths of 0–180 meters. The scallop analysis was informed by SeaLifeBase (https://www.sealifebase.ca/country/CountrySpeciesSummary.php?Country=US+America+%28contiguous+states%29&genusname=Argopecten&speciesname=ventricosus), which identifies a preferred temperature of 26°C and a depth range of 0–180 meters for Argopecten ventricosus.
+
+The results suggest that Pacific calico scallops have a larger area of potentially suitable habitat than oysters, particularly along portions of the Oregon and California coasts. This difference is likely influenced by the broader depth range used for scallops. Both maps show geographic variation in suitable habitat across EEZ regions, highlighting how environmental conditions may influence potential aquaculture opportunities.
+
