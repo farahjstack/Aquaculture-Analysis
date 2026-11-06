@@ -57,7 +57,7 @@ Spatial data were processed and visualized in R using the following packages:
 
 Five annual SST rasters (2008–2012) were combined to calculate mean sea surface temperature and converted from Kelvin to Celsius. Ocean bathymetry data were cropped and resampled using bilinear interpolation to match the SST raster's resolution and extent. Coordinate reference systems were checked for consistency.
 
-A custom R function, suitable_aquaculutre(), was developed to identify suitable habitat based on species-specific temperature and depth requirements.
+A custom R function, `suitable_aquaculutre()`, was developed to identify suitable habitat based on species-specific temperature and depth requirements.
 
 Oysters: SST between 11–30°C and ocean depths between 0–70 meters, based on the environmental requirements provided in the assignment.
 
@@ -65,7 +65,7 @@ Pacific calico scallops: SST between 11–28.5°C and ocean depths between 0–1
 
 Raster cells meeting both temperature and depth conditions were classified as suitable (1), while cells outside these ranges were classified as unsuitable (0). Map algebra was used to identify locations satisfying both conditions.
 
-Suitable habitat rasters were masked to West Coast EEZ boundaries. The area of suitable raster cells was calculated in square kilometers using terra::cellSize(), and terra::zonal() was used to summarize total suitable habitat area within each EEZ region.
+Suitable habitat rasters were masked to West Coast EEZ boundaries. The area of suitable raster cells was calculated in square kilometers using `terra::cellSize()`, and `terra::zonal()` was used to summarize total suitable habitat area within each EEZ region.
 
 ## Author
 Farah Stack
